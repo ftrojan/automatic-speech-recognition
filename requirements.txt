@@ -1,0 +1,6 @@
+transformers
+datasets
+evaluate
+jiwer
+librosa
+soundfile
