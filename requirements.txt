@@ -4,3 +4,4 @@ evaluate
 jiwer
 librosa
 soundfile
+torch
