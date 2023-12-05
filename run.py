@@ -1,9 +1,11 @@
 import logging
-import datasets
-import transformers
-import torch
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
+import numpy as np
+import torch
+import datasets
+import transformers
+import evaluate
 
 
 def uppercase(example):
@@ -17,6 +19,14 @@ def prepare_dataset(batch):
     return batch
 
 
+def compute_metrics(pred):
+    pred_logits = pred.predictions
+    pred_ids = np.argmax(pred_logits, axis=-1)
+    pred.label_ids[pred.label_ids == -100] = processor.tokenizer.pad_token_id
+    pred_str = processor.batch_decode(pred_ids)
+    label_str = processor.batch_decode(pred.label_ids, group_tokens=False)
+    wer = wer.compute(predictions=pred_str, references=label_str)
+    return {"wer": wer}
 
 
 @dataclass
@@ -53,4 +63,6 @@ minds = minds.map(uppercase)
 encoded_minds = minds.map(prepare_dataset, remove_columns=minds.column_names["train"], num_proc=4)
 print(minds["train"][0])
 data_collator = DataCollatorCTCWithPadding(processor=processor, padding="longest")
+# evaluate
+wer = evaluate.load("wer")  # word error rate [0, 1], the smaller the better
 logger.info("completed")
